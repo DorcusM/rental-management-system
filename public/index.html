@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentMaster - Rental Management System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for Rent Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <!-- Left Navigation Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-icon">
+          <i data-lucide="building-2"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <span class="brand-name">RentMaster</span>
+          <span class="brand-tag">Property System</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <span class="nav-label">Main Menu</span>
+        <button class="nav-item active" data-tab="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-tab="rooms">
+          <i data-lucide="door-closed"></i>
+          <span>Rooms</span>
+        </button>
+        <button class="nav-item" data-tab="tenants">
+          <i data-lucide="users"></i>
+          <span>Tenants</span>
+        </button>
+        <button class="nav-item" data-tab="payments">
+          <i data-lucide="credit-card"></i>
+          <span>Rent Payments</span>
+        </button>
+
+        <span class="nav-label" style="margin-top: 12px;">Analytics & System</span>
+        <button class="nav-item" data-tab="reports">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Reports</span>
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-widget">
+          <div id="sidebarUserAvatar" class="user-avatar">AD</div>
+          <div class="user-meta">
+            <div id="sidebarUserName" class="user-name">Administrator</div>
+            <div id="sidebarUserRole" class="user-role">admin@rental.com</div>
+          </div>
+        </div>
+        <button id="logoutBtn" class="logout-btn">
+          <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button id="menuToggleBtn" class="menu-toggle-btn" aria-label="Toggle Navigation">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="page-title-wrap">
+            <h1 id="topHeaderTitle">Dashboard Overview</h1>
+            <p id="topHeaderSubtitle">Real-time property and rental metrics</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="btn btn-primary btn-sm" onclick="Payments.openRecordModal()">
+            <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+            <span>Record Payment</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="Tenants.openAddModal()">
+            <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+            <span>New Tenant</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Page Content -->
+      <main class="page-content">
+
+        <!-- ==========================================
+             SECTION 1: DASHBOARD
+             ========================================== -->
+        <section id="dashboardSection" class="content-section active">
+          <!-- 6 Key Metrics Grid -->
+          <div class="metrics-grid">
+            <!-- 1. Total Rooms -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Total Rooms</span>
+                <span id="statTotalRooms" class="metric-value">0</span>
+                <span class="metric-subtitle">Managed units</span>
+              </div>
+              <div class="metric-icon-wrap icon-blue">
+                <i data-lucide="building"></i>
+              </div>
+            </div>
+
+            <!-- 2. Occupied Rooms -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Occupied Rooms</span>
+                <span id="statOccupiedRooms" class="metric-value">0</span>
+                <span id="statOccupancyRate" class="metric-subtitle" style="color: var(--primary); font-weight:600;">0% Occupancy</span>
+              </div>
+              <div class="metric-icon-wrap icon-green">
+                <i data-lucide="check-circle-2"></i>
+              </div>
+            </div>
+
+            <!-- 3. Vacant Rooms -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Vacant Rooms</span>
+                <span id="statVacantRooms" class="metric-value">0</span>
+                <span class="metric-subtitle">Available for rent</span>
+              </div>
+              <div class="metric-icon-wrap icon-amber">
+                <i data-lucide="door-open"></i>
+              </div>
+            </div>
+
+            <!-- 4. Registered Tenants -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Active Tenants</span>
+                <span id="statTotalTenants" class="metric-value">0</span>
+                <span class="metric-subtitle">Currently residing</span>
+              </div>
+              <div class="metric-icon-wrap icon-green">
+                <i data-lucide="users"></i>
+              </div>
+            </div>
+
+            <!-- 5. Total Rent Collected -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Total Rent Collected</span>
+                <span id="statTotalCollected" class="metric-value">$0.00</span>
+                <span class="metric-subtitle">All-time revenue</span>
+              </div>
+              <div class="metric-icon-wrap icon-green">
+                <i data-lucide="dollar-sign"></i>
+              </div>
+            </div>
+
+            <!-- 6. Outstanding Rent Balances -->
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Outstanding Balance</span>
+                <span id="statOutstandingRent" class="metric-value" style="color: var(--danger);">$0.00</span>
+                <span class="metric-subtitle">Pending tenant dues</span>
+              </div>
+              <div class="metric-icon-wrap icon-red">
+                <i data-lucide="alert-octagon"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Quick Navigation Grid -->
+          <div class="dashboard-grid">
+            <!-- Monthly Rent Collection Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Monthly Rent Collection (Past 6 Months)</h3>
+                <span class="badge badge-success">Live Database</span>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="monthlyRentChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Navigation & Module Shortcuts -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Quick Actions</h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions-grid">
+                  <div class="quick-action-item" onclick="Payments.openRecordModal()">
+                    <i data-lucide="credit-card" style="width: 24px; height: 24px; color: var(--primary);"></i>
+                    <span>Record Payment</span>
+                  </div>
+                  <div class="quick-action-item" onclick="Tenants.openAddModal()">
+                    <i data-lucide="user-plus" style="width: 24px; height: 24px; color: var(--info);"></i>
+                    <span>Register Tenant</span>
+                  </div>
+                  <div class="quick-action-item" onclick="Rooms.openAddModal()">
+                    <i data-lucide="plus-square" style="width: 24px; height: 24px; color: var(--warning);"></i>
+                    <span>Add Room</span>
+                  </div>
+                  <div class="quick-action-item" onclick="Navigation.switchTab('reports')">
+                    <i data-lucide="file-spreadsheet" style="width: 24px; height: 24px; color: var(--slate-700);"></i>
+                    <span>View Reports</span>
+                  </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 14px; background: var(--slate-50); border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 0.8125rem;">
+                  <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">System Tip</div>
+                  <p style="color: var(--text-muted);">
+                    When a tenant is allocated an available room, the system automatically sets the room to Occupied and prevents duplicate room allocation.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity: Payments & Tenants side-by-side or stacked -->
+          <div class="dashboard-grid">
+            <!-- Recent Rent Payments -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recent Rent Payments</h3>
+                <button class="btn btn-sm btn-secondary" onclick="Navigation.switchTab('payments')">
+                  View All
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Tenant & Room</th>
+                      <th>Method</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentPaymentsTableBody">
+                    <tr><td colspan="5" class="empty-state">Loading recent payments...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Recently Registered Tenants -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recently Registered Tenants</h3>
+                <button class="btn btn-sm btn-secondary" onclick="Navigation.switchTab('tenants')">
+                  View All
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Tenant</th>
+                      <th>Room & Rent</th>
+                      <th>Move-in</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentTenantsTableBody">
+                    <tr><td colspan="4" class="empty-state">Loading recent tenants...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             SECTION 2: ROOM MANAGEMENT
+             ========================================== -->
+        <section id="roomsSection" class="content-section">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2>Room Management</h2>
+              <p>Configure rental units, assign prices, and monitor tenant allocations</p>
+            </div>
+            <div class="section-actions">
+              <!-- Search -->
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="roomSearchInput" class="search-input" placeholder="Search room # or desc...">
+              </div>
+
+              <!-- Status filter -->
+              <select id="roomStatusFilter" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="Vacant">Vacant</option>
+                <option value="Occupied">Occupied</option>
+              </select>
+
+              <!-- View Toggle (Cards / Table) -->
+              <div style="display: flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+                <button id="roomViewCardsBtn" class="btn btn-sm btn-secondary active" onclick="Rooms.setView('cards')" title="Card View" style="border: none; border-radius: 0;">
+                  <i data-lucide="grid" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button id="roomViewTableBtn" class="btn btn-sm btn-secondary" onclick="Rooms.setView('table')" title="Table View" style="border: none; border-radius: 0;">
+                  <i data-lucide="list" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+
+              <!-- Add Room Button -->
+              <button class="btn btn-primary" onclick="Rooms.openAddModal()">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                <span>Add Room</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rooms Cards View Container -->
+          <div id="roomsCardsContainer" class="rooms-grid">
+            <!-- Dynamic cards -->
+          </div>
+
+          <!-- Rooms Table View Container -->
+          <div id="roomsTableContainer" class="card" style="display: none;">
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Room #</th>
+                    <th>Monthly Rent</th>
+                    <th>Status</th>
+                    <th>Current Tenant</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="roomsTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             SECTION 3: TENANT MANAGEMENT
+             ========================================== -->
+        <section id="tenantsSection" class="content-section">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2>Tenant Management</h2>
+              <p>Register tenants, assign available rooms, and track real-time rent balances</p>
+            </div>
+            <div class="section-actions">
+              <!-- Search -->
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="tenantSearchInput" class="search-input" placeholder="Search by name, phone...">
+              </div>
+
+              <!-- Status filter -->
+              <select id="tenantStatusFilter" class="filter-select">
+                <option value="all">All Tenants</option>
+                <option value="active" selected>Active Only</option>
+                <option value="inactive">Vacated / Inactive</option>
+              </select>
+
+              <!-- Register Tenant Button -->
+              <button class="btn btn-primary" onclick="Tenants.openAddModal()">
+                <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+                <span>Register Tenant</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tenants Table -->
+          <div class="card">
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Tenant Details</th>
+                    <th>Allocated Room</th>
+                    <th>Move-In Date</th>
+                    <th>Total Paid</th>
+                    <th>Rent Balance</th>
+                    <th>State</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantsTableBody">
+                  <tr><td colspan="7" class="empty-state">Loading tenants...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             SECTION 4: RENT PAYMENTS
+             ========================================== -->
+        <section id="paymentsSection" class="content-section">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2>Rent Payments</h2>
+              <p>Record transactions, issue receipts, and monitor collection history</p>
+            </div>
+            <div class="section-actions">
+              <!-- Summary Pill -->
+              <div style="background: var(--primary-light); padding: 8px 14px; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--primary); font-weight: 600;">
+                Filtered Total: <span id="paymentTotalCollectedLabel">$0.00</span>
+              </div>
+
+              <!-- Search -->
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="paymentSearchInput" class="search-input" placeholder="Search tenant, room, ref...">
+              </div>
+
+              <!-- Method filter -->
+              <select id="paymentMethodFilter" class="filter-select">
+                <option value="">All Methods</option>
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+              </select>
+
+              <!-- Date filters -->
+              <input type="date" id="paymentStartDateFilter" class="filter-select" title="Start Date">
+              <input type="date" id="paymentEndDateFilter" class="filter-select" title="End Date">
+
+              <!-- Record Payment Button -->
+              <button class="btn btn-primary" onclick="Payments.openRecordModal()">
+                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+                <span>Record Payment</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Payments Table -->
+          <div class="card">
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Room</th>
+                    <th>Amount Paid</th>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th>Reference</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentsTableBody">
+                  <tr><td colspan="7" class="empty-state">Loading payments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             SECTION 5: REPORTS & ANALYTICS
+             ========================================== -->
+        <section id="reportsSection" class="content-section">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2>Financial & Occupancy Reports</h2>
+              <p>Detailed performance analytics, collection rates and CSV export</p>
+            </div>
+            <div class="section-actions">
+              <!-- Year filter -->
+              <select id="reportYearFilter" class="filter-select">
+                <option value="">All Years</option>
+              </select>
+
+              <!-- Month filter -->
+              <select id="reportMonthFilter" class="filter-select">
+                <option value="">All Months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+
+              <!-- Export CSV Button -->
+              <button class="btn btn-secondary" onclick="Reports.exportCSV()">
+                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Report Metric Summary Cards -->
+          <div class="metrics-grid" style="margin-bottom: 24px;">
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Rent Collected</span>
+                <span id="reportTotalCollected" class="metric-value">$0.00</span>
+                <span class="metric-subtitle">Actual revenue received</span>
+              </div>
+              <div class="metric-icon-wrap icon-green">
+                <i data-lucide="check-check"></i>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Outstanding Rent</span>
+                <span id="reportTotalOutstanding" class="metric-value" style="color: var(--danger);">$0.00</span>
+                <span class="metric-subtitle">Pending arrears</span>
+              </div>
+              <div class="metric-icon-wrap icon-red">
+                <i data-lucide="alert-circle"></i>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Collection Rate</span>
+                <span id="reportCollectionRate" class="metric-value">0%</span>
+                <span class="metric-subtitle">Rent collected vs total due</span>
+              </div>
+              <div class="metric-icon-wrap icon-blue">
+                <i data-lucide="trending-up"></i>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-content">
+                <span class="metric-title">Occupancy Status</span>
+                <span id="reportOccupancyRate" class="metric-value">0%</span>
+                <span class="metric-subtitle">
+                  <span id="reportOccupiedRooms">0 Occupied</span> &bull; <span id="reportVacantRooms">0 Vacant</span>
+                </span>
+              </div>
+              <div class="metric-icon-wrap icon-amber">
+                <i data-lucide="pie-chart"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtered Payments Table in Report -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Transactions in Selected Report Period</h3>
+                <span id="reportFilteredCount" style="font-size: 0.8125rem; color: var(--text-muted);">0 Transactions</span>
+              </div>
+              <div style="font-weight: 700; color: var(--primary); font-size: 1.125rem;">
+                Total: <span id="reportFilteredTotal">$0.00</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Payment Date</th>
+                    <th>Tenant</th>
+                    <th>Room</th>
+                    <th>Payment Method</th>
+                    <th>Reference</th>
+                    <th>Amount Paid</th>
+                  </tr>
+                </thead>
+                <tbody id="reportPaymentsTableBody">
+                  <tr><td colspan="6" class="empty-state">Loading report data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             SECTION 6: SETTINGS & SYSTEM INFO
+             ========================================== -->
+        <section id="settingsSection" class="content-section">
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2>Settings & Diagnostics</h2>
+              <p>Manage administrator credentials and verify system health</p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Profile Settings -->
+            <div class="settings-section-card">
+              <div class="settings-header">
+                <h3>Administrator Profile</h3>
+                <p>Update administrator display name and contact email</p>
+              </div>
+              <form id="profileForm">
+                <div class="form-group">
+                  <label class="form-label" for="settingsNameInput">Full Name</label>
+                  <input type="text" id="settingsNameInput" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingsEmailInput">Email Address</label>
+                  <input type="email" id="settingsEmailInput" class="form-control" required>
+                </div>
+                <div style="margin-top: 18px;">
+                  <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Password Change -->
+            <div class="settings-section-card">
+              <div class="settings-header">
+                <h3>Change Password</h3>
+                <p>Securely change the administrator login password (bcrypt)</p>
+              </div>
+              <form id="changePasswordForm">
+                <div class="form-group">
+                  <label class="form-label" for="settingsCurrentPassword">Current Password</label>
+                  <input type="password" id="settingsCurrentPassword" class="form-control" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingsNewPassword">New Password (min. 6 characters)</label>
+                  <input type="password" id="settingsNewPassword" class="form-control" required minlength="6" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="settingsConfirmPassword">Confirm New Password</label>
+                  <input type="password" id="settingsConfirmPassword" class="form-control" required minlength="6" placeholder="••••••••">
+                </div>
+                <div style="margin-top: 18px;">
+                  <button type="submit" class="btn btn-secondary">Update Password</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Academic System Diagnostic Information -->
+          <div class="settings-section-card">
+            <div class="settings-header">
+              <h3>Academic System Diagnostics</h3>
+              <p>Real-time server runtime status and MongoDB database connection</p>
+            </div>
+            <div class="system-info-grid">
+              <div class="info-item">
+                <div class="info-label">MongoDB Connection</div>
+                <div id="sysDbStatus" class="info-value" style="color: var(--primary);">Connected</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Database Name</div>
+                <div id="sysDbName" class="info-value">rental_management_db</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Node.js Runtime</div>
+                <div id="sysNodeVersion" class="info-value">v26.x</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Server Uptime</div>
+                <div id="sysUptime" class="info-value">0 mins</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- 1. Add / Edit Room Modal -->
+  <div id="roomModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="roomModalTitle" class="modal-title">Add New Rental Room</h3>
+        <button type="button" class="modal-close-btn" onclick="Modal.close('roomModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="roomForm">
+        <div class="modal-body">
+          <input type="hidden" id="roomIdInput">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="roomNumberInput">Room Number <span class="required">*</span></label>
+              <input type="text" id="roomNumberInput" class="form-control" placeholder="e.g. 101, 202, A-1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="roomRentInput">Monthly Rent ($) <span class="required">*</span></label>
+              <div class="input-addon-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="roomRentInput" class="form-control" placeholder="400.00" min="0" step="0.01" required>
+              </div>
+            </div>
+            <div class="form-group form-full">
+              <label class="form-label" for="roomStatusSelect">Room Status</label>
+              <select id="roomStatusSelect" class="form-control">
+                <option value="Vacant">Vacant</option>
+                <option value="Occupied">Occupied</option>
+              </select>
+            </div>
+            <div class="form-group form-full">
+              <label class="form-label" for="roomDescInput">Room Description</label>
+              <textarea id="roomDescInput" class="form-control" placeholder="e.g. Ground floor single room with attached bath and kitchenette..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="Modal.close('roomModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Register / Edit Tenant Modal -->
+  <div id="tenantModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="tenantModalTitle" class="modal-title">Register New Tenant</h3>
+        <button type="button" class="modal-close-btn" onclick="Modal.close('tenantModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="tenantForm">
+        <div class="modal-body">
+          <input type="hidden" id="tenantIdInput">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label class="form-label" for="tenantNameInput">Full Name <span class="required">*</span></label>
+              <input type="text" id="tenantNameInput" class="form-control" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tenantPhoneInput">Phone Number <span class="required">*</span></label>
+              <input type="tel" id="tenantPhoneInput" class="form-control" placeholder="e.g. +1 555-0192" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tenantEmailInput">Email Address (Optional)</label>
+              <input type="email" id="tenantEmailInput" class="form-control" placeholder="e.g. john@example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tenantIdNumberInput">National ID / Passport (Optional)</label>
+              <input type="text" id="tenantIdNumberInput" class="form-control" placeholder="e.g. NAT-891024">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tenantMoveInInput">Move-in Date <span class="required">*</span></label>
+              <input type="date" id="tenantMoveInInput" class="form-control" required>
+            </div>
+            <div class="form-group form-full">
+              <label class="form-label" for="tenantRoomSelect">Allocated Room <span class="required">*</span></label>
+              <select id="tenantRoomSelect" class="form-control" required>
+                <option value="">-- Choose Available Room --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="Modal.close('tenantModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Tenant</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Record Rent Payment Modal -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Rent Payment</h3>
+        <button type="button" class="modal-close-btn" onclick="Modal.close('paymentModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="paymentForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group form-full">
+              <label class="form-label" for="paymentTenantSelect">Select Tenant <span class="required">*</span></label>
+              <select id="paymentTenantSelect" class="form-control" required>
+                <option value="">-- Select Tenant --</option>
+              </select>
+            </div>
+
+            <!-- Auto-detected room and balance information banner -->
+            <div class="form-group form-full" style="background: var(--slate-50); padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 0.8125rem;">
+              <div id="paymentRoomInfo" style="color: var(--slate-700);">
+                Please select a tenant to see their allocated room.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="paymentAmountInput">Amount Paid ($) <span class="required">*</span></label>
+              <div class="input-addon-wrap">
+                <span class="input-prefix">$</span>
+                <input type="number" id="paymentAmountInput" class="form-control" placeholder="0.00" min="1" step="0.01" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="paymentDateInput">Payment Date <span class="required">*</span></label>
+              <input type="date" id="paymentDateInput" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="paymentMethodSelect">Payment Method <span class="required">*</span></label>
+              <select id="paymentMethodSelect" class="form-control" required>
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="paymentReferenceInput">Transaction Reference</label>
+              <input type="text" id="paymentReferenceInput" class="form-control" placeholder="e.g. TXN-941029 / CSH-01">
+            </div>
+
+            <div class="form-group form-full">
+              <label class="form-label" for="paymentNotesInput">Description / Note</label>
+              <textarea id="paymentNotesInput" class="form-control" placeholder="e.g. Rent payment for November..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="Modal.close('paymentModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save & Issue Receipt</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Payment Receipt Modal (Printable) -->
+  <div id="receiptModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Payment Receipt</h3>
+        <button type="button" class="modal-close-btn" onclick="Modal.close('receiptModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="receiptModalContent">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="Modal.close('receiptModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <i data-lucide="printer" style="width: 14px; height: 14px;"></i>
+          <span>Print Receipt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Tenant Statement Modal -->
+  <div id="tenantStatementModal" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">Tenant Statement & History</h3>
+        <button type="button" class="modal-close-btn" onclick="Modal.close('tenantStatementModal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="tenantStatementContent">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="Modal.close('tenantStatementModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/rooms.js"></script>
+  <script src="/js/tenants.js"></script>
+  <script src="/js/payments.js"></script>
+  <script src="/js/reports.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

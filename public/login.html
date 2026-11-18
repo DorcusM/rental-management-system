@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Rental Management System</title>
+  <link rel="stylesheet" href="/css/login.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-brand">
+      <div class="brand-icon">
+        <i data-lucide="building-2"></i>
+      </div>
+      <h1 class="brand-title">RentMaster</h1>
+      <p class="brand-subtitle">Rental & Property Management Portal</p>
+    </div>
+
+    <div class="login-card">
+      <h2 class="card-heading">Administrator Login</h2>
+      <p class="card-desc">Sign in with your administrator credentials to access the management dashboard.</p>
+
+      <div id="alertBox" class="alert-box"></div>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <div class="input-wrapper">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-input"
+              placeholder="admin@rental.com"
+              required
+              autocomplete="email"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-input"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            >
+          </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-primary">
+          <span>Sign In to Dashboard</span>
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </form>
+
+      <!-- Academic presentation convenience box -->
+      <div class="demo-credentials">
+        <div><strong>Academic Demo Credentials:</strong></div>
+        <div>Email: <code>admin@rental.com</code></div>
+        <div>Password: <code>admin123</code></div>
+        <button type="button" class="quick-fill-btn" id="quickFillBtn">
+          Click here to auto-fill demo credentials
+        </button>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      Rental Management System &bull; University Academic Project
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons if available
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    const loginForm = document.getElementById('loginForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const quickFillBtn = document.getElementById('quickFillBtn');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    // Quick fill demo credentials
+    quickFillBtn.addEventListener('click', () => {
+      emailInput.value = 'admin@rental.com';
+      passwordInput.value = 'admin123';
+      emailInput.focus();
+    });
+
+    // Check if already authenticated
+    async function checkExistingAuth() {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.href = '/';
+          }
+        } catch (e) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+        }
+      }
+    }
+    checkExistingAuth();
+
+    function showAlert(message, type = 'error') {
+      alertBox.textContent = message;
+      alertBox.className = `alert-box alert-${type}`;
+      alertBox.style.display = 'block';
+    }
+
+    function hideAlert() {
+      alertBox.style.display = 'none';
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showAlert('Please enter both email and password.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Signing in...</span>';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showAlert('Login successful! Redirecting...', 'success');
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('adminUser', JSON.stringify(data.user));
+
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 600);
+        } else {
+          showAlert(data.message || 'Invalid email or password.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Sign In to Dashboard</span> <i data-lucide="arrow-right"></i>';
+          if (window.lucide) lucide.createIcons();
+        }
+      } catch (err) {
+        showAlert('Network error: Unable to connect to server. Please ensure Node.js is running.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Sign In to Dashboard</span> <i data-lucide="arrow-right"></i>';
+        if (window.lucide) lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
